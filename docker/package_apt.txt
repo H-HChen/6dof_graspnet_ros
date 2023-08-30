@@ -1,0 +1,9 @@
+python-h5py
+python-rtree
+qt4-default
+python-pyside
+python-termcolor
+python-opengl
+libgeos-dev
+python-setuptools
+python-mock
