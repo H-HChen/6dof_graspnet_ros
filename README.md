@@ -27,7 +27,46 @@ rm tensorflow-1.12.0.a6d8ffa.AVX2.CUDA10-cp27-cp27mu-linux_x86_64.whl
 
 8) Download the checkpoints to the `checkpoints` folder. Trained checkpoints are released under [CC-BY-NC-SA 2.0](TRAINED_MODEL_LICENSE) and can be downloaded from [here](https://drive.google.com/drive/folders/1mVX2kqXg9BZ22y3HEyqta20tiQrL8OK_?usp=sharing). **The checkpoints of the models trained on [ACRONYM Dataset](https://sites.google.com/nvidia.com/graspdataset) are uploaded.**
 
-
+## Installation with Docker and ROS
+1) Clone this repository and 
+```bash
+cd ~
+mkdir -p grasp_ros1_ws/src
+cd grasp_ros1_ws/src
+git clone https://github.com/H-HChen/6dof_graspnet_ros.git
+git clone https://github.com/ISCI-LAB/grasp_msgs.git
+cd 6dof_graspnet_ros
+```
+2) Download cudnn from [here](https://developer.nvidia.com/cudnn)
+```bash
+tar -xzvf cudnn-10.0-linux-x64-v7.6.5.32.tgz
+```
+3) Build docker image
+```bash
+cd docker
+bash ./build.sh
+bash ./docker_run.sh
+```
+4) After entering the container, install CUDA
+```bash
+bash ./install_cuda_10.sh
+```
+5) Install required module
+```bash
+source ~/.bashrc
+pip2 install horovod
+pip2 install mayavi==4.6.2
+sh compile_pointnet_tfops.sh
+```
+6) Build ROS workspace
+```bash
+cd ~/grasp_ros1_ws
+catkin build
+```
+7) After installation, you can launch docker container with
+```bash
+bash ./docker_start.sh
+```
 ## Demo
 Run the demo using the command below. In the paper, we only used gradient-based refinement. We also experimented with Metropolis-Hastings sampling and found it giving better results in shorter time.
 As a result, we keep Metropolis-Hastings sampling as the default for the demo.
@@ -41,6 +80,26 @@ python -m demo.main --gradient_based_refinement # uses gradient based refinement
 Using VAE as sampler:
 ```shell
 python -m demo.main --vae_checkpoint_folder checkpoints/npoints_1024_train_evaluator_0_allowed_categories__ngpus_1_/
+```
+## Inference by using ROS
+Contact_graspnet_ros is using ROS service to transport data. You can check data type in `msg/GraspPose.msg` and `srv/GraspGroup.srv`. Below is the content of service data type.
+The client sends RGB-D data, target mask and intrinsic matrix as request, then takes a list of grasping pose candidates as return.
+You need to specify the target ID in object mask. For example, if `seg` is a binary mask, then you need to set `segmap_id` as 1.
+
+```
+sensor_msgs/Image rgb
+sensor_msgs/Image depth
+sensor_msgs/Image seg
+float64[9] K
+int32 segmap_id
+---
+grasp_msgs/GraspPose[] grasp_poses
+```
+
+After loading current workspace, you can launch a ROS node by command-line.
+```bash
+source ~/grasp_ros1_ws/devel/setup.bash
+rosrun nv_graspnet_ros ros_node.py
 ```
 
 ![example](demo/examples/1.png) ![example](demo/examples/2.png)
