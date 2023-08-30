@@ -11,9 +11,13 @@ import os
 
 # For my machine
 BASE_DIR = os.path.dirname(__file__)
-sys.path.append(os.path.join(BASE_DIR, '../../pointnet2/utils/'))
-# For docker
-sys.path.append('/pointnet2/utils')
+if os.path.exists(os.path.join(BASE_DIR, '../../pointnet2/utils/')):
+    sys.path.append(os.path.join(BASE_DIR, '../../pointnet2/utils/'))
+else:
+    # For docker
+    sys.path.append(os.path.join(os.path.expanduser("~"), "pointnet2/utils"))
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, "../"))
 
 import tf_util
 from pointnet_util import pointnet_sa_module, pointnet_sa_module_msg, pointnet_fp_module
@@ -24,12 +28,6 @@ import os
 
 import numpy as np
 import trimesh.transformations as tra
-
-# For my machine
-BASE_DIR = os.path.dirname(__file__)
-sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, '../pointnet2/utils/'))
-sys.path.append(os.path.join(BASE_DIR, '../'))
 
 
 def base_network(l0_xyz,

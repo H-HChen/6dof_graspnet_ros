@@ -71,7 +71,7 @@ def joint_config(vae_folder, evaluator_folder='', dataset_root_folder='', eval_s
     
     # adding params that are used for inference and not for training.
     args['ngpus'] = 1
-    args['gpu'] = 1
+    args['gpu'] = 0
     args['vae_checkpoint_folder'] = os.path.join(vae_folder, 'tf_output')
     args['evaluator_checkpoint_folder'] = os.path.join(evaluator_folder, 'tf_output')
     args['sample_based_improvement'] = 1
@@ -296,6 +296,26 @@ class GraspEstimator:
         improved_translations = translation + np.expand_dims(alpha, -1) * delta_t
 
         return current_success, improved_translations, improved_angles
+
+    def compute_grasps_score(self, sess, input_pc, gripper_trans, gripper_rot):
+        normalize_pc_count = input_pc.shape[0] != self._cfg.npoints
+        if normalize_pc_count:
+            pc = regularize_pc_point_count(input_pc, self._cfg.npoints).copy()
+        else:
+            pc = input_pc.copy()
+
+        pc_mean = np.mean(pc, 0)
+        pc -= np.expand_dims(pc_mean, 0)
+        gripper_trans -= pc_mean
+        broadcast_pc = np.tile(np.expand_dims(pc, 0), [1, 1, 1])
+        fd = {}
+        fd[self._data_dict['evaluator_pc']] = broadcast_pc
+        for i in range(3):
+            fd[self._data_dict['evaluator_grasp_eulers'][i]] = [gripper_rot[i]]
+
+        fd[self._data_dict['evaluator_grasp_translations']] = gripper_trans[None]
+        current_success = sess.run(self._data_dict['evaluator_pred/success'], feed_dict=fd)
+        return current_success
 
     def _improve_grasps_sampling_based(
       self,

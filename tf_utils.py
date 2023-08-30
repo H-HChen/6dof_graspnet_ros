@@ -14,8 +14,9 @@ import time
 import trimesh.transformations as tra
 import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)).rstrip("demo")
 GRIPPER_PC = np.load(
-    'gripper_models/panda_pc.npy', allow_pickle=True).item()['points']
+    os.path.join(BASE_DIR, 'gripper_models/panda_pc.npy'), allow_pickle=True).item()['points']
 GRIPPER_PC[:, 3] = 1.
 
 
@@ -66,7 +67,7 @@ def get_control_point_tensor(batch_size, use_tf=True):
       Outputs a tensor of shape (batch_size x 6 x 3).
       use_tf: switches between outputing a tensor and outputing a numpy array.
     """
-    control_points = np.load('gripper_control_points/panda.npy')[:, :3]
+    control_points = np.load(os.path.join(BASE_DIR, 'gripper_control_points/panda.npy'))[:, :3]
     control_points = [[0, 0, 0], [0, 0, 0], control_points[0, :],
                       control_points[1, :], control_points[-2, :], control_points[-1, :]]
     control_points = np.asarray(control_points, dtype=np.float32)
